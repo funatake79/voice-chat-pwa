@@ -1,31 +1,104 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>音声＋手入力チャット</title>
-    <style>
-        body { font-family: sans-serif; }
-        #chat {
-            border: 1px solid #ccc;
-            padding: 10px;
-            height: 300px;
-            overflow-y: auto;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>音声＋手入力チャット</title>
+<style>
+    body {
+        font-family: sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f9f9f9;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+    h1 {
+        font-size: 1.2rem;
+        text-align: center;
+        background: #4CAF50;
+        color: white;
+        margin: 0;
+        padding: 10px;
+    }
+    #chat {
+        flex: 1;
+        border-top: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+        padding: 10px;
+        overflow-y: auto;
+        background: white;
+    }
+    .me { color: #1E88E5; }
+    .voice { color: #43A047; }
+    .input-area {
+        display: flex;
+        gap: 5px;
+        padding: 10px;
+        background: #f1f1f1;
+    }
+    #textInput {
+        flex: 1;
+        padding: 10px;
+        font-size: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+    button {
+        padding: 10px 12px;
+        font-size: 1rem;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    #sendBtn {
+        background: #2196F3;
+        color: white;
+    }
+    #startVoice {
+        background: #4CAF50;
+        color: white;
+    }
+    #stopVoice {
+        background: #F44336;
+        color: white;
+    }
+    .voice-controls {
+        display: flex;
+        gap: 5px;
+        padding: 10px;
+        background: #f1f1f1;
+        justify-content: center;
+    }
+    @media (max-width: 480px) {
+        h1 {
+            font-size: 1rem;
+            padding: 8px;
         }
-        .me { color: blue; }
-        .voice { color: green; }
-    </style>
+        button {
+            font-size: 0.9rem;
+            padding: 8px 10px;
+        }
+        #textInput {
+            font-size: 0.9rem;
+        }
+    }
+</style>
 </head>
 <body>
     <h1>音声＋手入力チャット</h1>
-
     <div id="chat"></div>
 
-    <input id="textInput" type="text" placeholder="メッセージを入力">
-    <button id="sendBtn">送信</button>
+    <div class="input-area">
+        <input id="textInput" type="text" placeholder="メッセージを入力">
+        <button id="sendBtn">送信</button>
+    </div>
 
-    <button id="startVoice">🎙 音声開始</button>
-    <button id="stopVoice">⏹ 停止</button>
+    <div class="voice-controls">
+        <button id="startVoice">🎙 開始</button>
+        <button id="stopVoice">⏹ 停止</button>
+    </div>
 
     <script>
         const chat = document.getElementById('chat');
@@ -58,26 +131,16 @@
             rec.continuous = true;
             rec.interimResults = true;
 
-            // デバッグ用イベント
-            rec.onstart = () => console.log("🎤 音声認識開始");
-            rec.onspeechstart = () => console.log("🗣 発話検出");
-            rec.onspeechend = () => console.log("🔇 発話終了");
-            rec.onaudioend = () => console.log("🎧 音声入力終了");
-            rec.onnomatch = () => console.log("❓ マッチなし");
-            rec.onerror = (e) => console.error("❌ エラー:", e.error);
-
             rec.onresult = (event) => {
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const transcript = event.results[i][0].transcript;
                     if (event.results[i].isFinal) {
                         addMessage(transcript, 'voice');
-                        console.log("✅ 認識結果:", transcript);
                     }
                 }
             };
 
             rec.onend = () => {
-                console.log("⏹ 音声認識終了、再起動します…");
                 setTimeout(() => {
                     recognition = createRecognition();
                     recognition.start();
@@ -89,19 +152,11 @@
 
         let recognition = createRecognition();
 
-        // 初回は必ずクリックイベント内でstart()
         document.getElementById('startVoice').onclick = () => {
-            try {
-                recognition.start();
-                console.log("▶️ start() 呼び出し");
-            } catch (e) {
-                console.error("start() エラー:", e);
-            }
+            try { recognition.start(); } catch (e) { console.error(e); }
         };
-
         document.getElementById('stopVoice').onclick = () => {
             recognition.stop();
-            console.log("■ stop() 呼び出し");
         };
     </script>
 </body>
