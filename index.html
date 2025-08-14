@@ -1,32 +1,21 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>音声＋手入力チャット</title>
     <style>
-        body {
-            font-family: sans-serif;
-        }
-
+        body { font-family: sans-serif; }
         #chat {
             border: 1px solid #ccc;
             padding: 10px;
             height: 300px;
             overflow-y: auto;
         }
-
-        .me {
-            color: blue;
-        }
-
-        .voice {
-            color: green;
-        }
+        .me { color: blue; }
+        .voice { color: green; }
     </style>
 </head>
-
 <body>
     <h1>音声＋手入力チャット</h1>
 
@@ -42,14 +31,12 @@
         const chat = document.getElementById('chat');
         const messages = [];
 
-        // チャットにメッセージを追加
         function addMessage(text, type) {
             if (!text.trim()) return;
             messages.push({ text, type, time: Date.now() });
             render();
         }
 
-        // チャットを描画
         function render() {
             chat.innerHTML = messages
                 .map(msg => `<div class="${msg.type}">[${msg.type}] ${msg.text}</div>`)
@@ -57,7 +44,6 @@
             chat.scrollTop = chat.scrollHeight;
         }
 
-        // 手入力送信
         document.getElementById('sendBtn').onclick = () => {
             const text = document.getElementById('textInput').value;
             if (text.trim()) {
@@ -66,24 +52,32 @@
             }
         };
 
-        // Safari対応：SpeechRecognitionインスタンス作成関数
         function createRecognition() {
             const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
             rec.lang = 'ja-JP';
             rec.continuous = true;
-            rec.interimResults = true; // 一時結果も取得
+            rec.interimResults = true;
+
+            // デバッグ用イベント
+            rec.onstart = () => console.log("🎤 音声認識開始");
+            rec.onspeechstart = () => console.log("🗣 発話検出");
+            rec.onspeechend = () => console.log("🔇 発話終了");
+            rec.onaudioend = () => console.log("🎧 音声入力終了");
+            rec.onnomatch = () => console.log("❓ マッチなし");
+            rec.onerror = (e) => console.error("❌ エラー:", e.error);
 
             rec.onresult = (event) => {
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const transcript = event.results[i][0].transcript;
                     if (event.results[i].isFinal) {
                         addMessage(transcript, 'voice');
+                        console.log("✅ 認識結果:", transcript);
                     }
                 }
             };
 
             rec.onend = () => {
-                // Safariのバグ回避：インスタンス作り直し＋遅延再スタート
+                console.log("⏹ 音声認識終了、再起動します…");
                 setTimeout(() => {
                     recognition = createRecognition();
                     recognition.start();
@@ -95,11 +89,20 @@
 
         let recognition = createRecognition();
 
-        // 音声開始
-        document.getElementById('startVoice').onclick = () => recognition.start();
-        // 音声停止
-        document.getElementById('stopVoice').onclick = () => recognition.stop();
+        // 初回は必ずクリックイベント内でstart()
+        document.getElementById('startVoice').onclick = () => {
+            try {
+                recognition.start();
+                console.log("▶️ start() 呼び出し");
+            } catch (e) {
+                console.error("start() エラー:", e);
+            }
+        };
+
+        document.getElementById('stopVoice').onclick = () => {
+            recognition.stop();
+            console.log("■ stop() 呼び出し");
+        };
     </script>
 </body>
-
 </html>
